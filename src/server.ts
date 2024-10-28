@@ -52,7 +52,7 @@ routes.post("/update", async (rec: Request, res: Response) => {
 
 routes.delete("/delete/:id", async (rec: Request, res: Response) => {
   await productsRepo.delete(rec.params.id as unknown as number);
-  res.statusCode = 204;
+  res.statusCode = 200;
   res.type("application/json");
 });
 
