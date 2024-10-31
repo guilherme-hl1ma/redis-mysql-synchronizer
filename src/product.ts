@@ -1,8 +1,8 @@
-import { RowDataPacket } from "mysql2"
+import { RowDataPacket } from "mysql2";
 
 export interface Product extends RowDataPacket {
-    id?: number
-    name: string
-    price: number
-    description: string 
+  id?: number;
+  name: string;
+  price: number;
+  description: string;
 }
