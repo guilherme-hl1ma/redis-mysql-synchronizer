@@ -194,6 +194,8 @@ routes.delete("/delete/:id", async (rec: Request, res: Response) => {
       return;
     }
 
+    const saveProduct = await productsRepo.getById(idParam);
+
     const idResponse = await productsRepo.delete(id); // Deleta o 'product' no MySQL.
     if (idResponse === 0) {
       res.statusCode = 404;
@@ -201,8 +203,18 @@ routes.delete("/delete/:id", async (rec: Request, res: Response) => {
       res.send({ error: "Product not found." });
       return;
     }
-
-    await redis.delete(id); // Deleta o 'product' no Redis.
+    
+    try {
+      await redis.delete(id); // Deleta o 'product' no Redis.
+    } catch (e) {
+      await productsRepo.create(saveProduct!!);
+      res.statusCode = 500;
+      res.type("application/json");
+      res.send({
+        error: e instanceof Error ? e.message : "Internal Server Error",
+      });
+      return;
+    }
 
     res.statusCode = 200;
     res.type("application/json");
