@@ -102,7 +102,17 @@ routes.post("/create", async (rec: Request, res: Response) => {
 
     const products = await productsRepo.create(newProduct); // Cria um 'product' no MySQL.
 
-    redis.create(products); // Cria um 'product' no Redis.
+    try {
+      await redis.create(products); // Cria um 'product' no Redis.
+    } catch (e) {
+      await productsRepo.delete(products.id);
+      res.statusCode = 500;
+      res.type("application/json");
+      res.send({
+        error: e instanceof Error ? e.message : "Internal Server Error",
+      });
+      return;
+    }
 
     res.statusCode = 200;
     res.type("application/json");
@@ -121,6 +131,8 @@ routes.post("/create", async (rec: Request, res: Response) => {
 routes.post("/update", async (rec: Request, res: Response) => {
   try {
     const updatedProduct = rec.body as Product;
+
+    const previousProduct = await productsRepo.getById(updatedProduct.id);
 
     if (
       !updatedProduct ||
@@ -144,7 +156,17 @@ routes.post("/update", async (rec: Request, res: Response) => {
       return;
     }
 
-    await redis.update(products); // Atualiza o 'product' no Redis.
+    try {
+      await redis.update(products); // Atualiza o 'product' no Redis.
+    } catch (e) {
+      await productsRepo.update(previousProduct!!);
+      res.statusCode = 500;
+      res.type("application/json");
+      res.send({
+        error: e instanceof Error ? e.message : "Internal Server Error",
+      });
+      return;
+    }
 
     res.statusCode = 200;
     res.type("application/json");
@@ -180,7 +202,7 @@ routes.delete("/delete/:id", async (rec: Request, res: Response) => {
       return;
     }
 
-    redis.delete(id); // Deleta o 'product' no Redis.
+    await redis.delete(id); // Deleta o 'product' no Redis.
 
     res.statusCode = 200;
     res.type("application/json");
