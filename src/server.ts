@@ -21,8 +21,6 @@ routes.get("/", (req: Request, res: Response) => {
 
 routes.get("/getAllProducts", async (req: Request, res: Response) => {
   try {
-    await redis.synchronize();
-
     const result = await redis.searchAllProducts();
 
     if (result.total === 0) {
@@ -48,8 +46,6 @@ routes.get("/getAllProducts", async (req: Request, res: Response) => {
 
 routes.get("/getById/:id", async (rec: Request, res: Response) => {
   try {
-    await redis.synchronize();
-
     const idParam = rec.params.id as unknown as number;
 
     const id = Number(idParam);
@@ -85,8 +81,6 @@ routes.get("/getById/:id", async (rec: Request, res: Response) => {
 
 routes.post("/create", async (rec: Request, res: Response) => {
   try {
-    await redis.synchronize();
-
     const newProduct = rec.body as Product;
     if (
       !newProduct ||
@@ -119,8 +113,6 @@ routes.post("/create", async (rec: Request, res: Response) => {
 
 routes.post("/update", async (rec: Request, res: Response) => {
   try {
-    await redis.synchronize();
-
     const updatedProduct = rec.body as Product;
 
     if (
@@ -162,8 +154,6 @@ routes.post("/update", async (rec: Request, res: Response) => {
 
 routes.delete("/delete/:id", async (rec: Request, res: Response) => {
   try {
-    await redis.synchronize();
-
     const idParam = rec.params.id as unknown as number;
 
     const id = Number(idParam);
@@ -202,4 +192,5 @@ app.use(routes);
 
 app.listen(port, async () => {
   console.log("Server is running on 3000");
+  await redis.synchronize();
 });

@@ -27,7 +27,6 @@ export class Redis {
 
   onError() {
     this.client.on("error", (err) => {
-      //console.log("Redis Client Error", err);
       throw new Error("Redis Client Error: " + err)
     });
   }
