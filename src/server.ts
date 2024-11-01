@@ -2,26 +2,30 @@ import express from "express";
 import { Request, Response, Router } from "express";
 import { ProductsRepository } from "./ProductsRepository";
 import { Product } from "./product";
-import { Redis } from "./Redis";
+import { Redis } from "./redis";
 
+// Cria uma aplicação no 'express', define a porta do servidor e cria um 'router' para organizar as rotas.
 const app = express();
 const port = 3000;
 const routes = Router();
 
-//permite passar os parametros por json
+// Permite o recebimento de JSON no corpo das requisições.
 app.use(express.json());
 
+// Instancia o repositório de 'products' para acessar o MySQL e o cliente do Redis.
 const productsRepo = new ProductsRepository();
 const redis = new Redis();
 
+// Rota que indica que o servidor está funcionando.
 routes.get("/", (req: Request, res: Response) => {
   res.statusCode = 200;
   res.send("Funcionando...");
 });
 
+// Rota que busca todos os 'products' no Redis.
 routes.get("/getAllProducts", async (req: Request, res: Response) => {
   try {
-    const result = await redis.searchAllProducts();
+    const result = await redis.searchAllProducts(); // Faz a busca de todos os 'products' no Redis.
 
     if (result.total === 0) {
       res.statusCode = 404;
@@ -44,6 +48,7 @@ routes.get("/getAllProducts", async (req: Request, res: Response) => {
   }
 });
 
+// Rota que busca um 'product' no Redis pelo 'id'.
 routes.get("/getById/:id", async (rec: Request, res: Response) => {
   try {
     const idParam = rec.params.id as unknown as number;
@@ -56,7 +61,7 @@ routes.get("/getById/:id", async (rec: Request, res: Response) => {
       return;
     }
 
-    const result = await redis.searchProductById(id);
+    const result = await redis.searchProductById(id); // Faz a busca do 'product' no Redis.
     if (result.total === 0) {
       res.statusCode = 404;
       res.type("application/json");
@@ -79,6 +84,7 @@ routes.get("/getById/:id", async (rec: Request, res: Response) => {
   }
 });
 
+// Rota que cria um 'product' no MySQL e no Redis.
 routes.post("/create", async (rec: Request, res: Response) => {
   try {
     const newProduct = rec.body as Product;
@@ -94,9 +100,9 @@ routes.post("/create", async (rec: Request, res: Response) => {
       return;
     }
 
-    const products = await productsRepo.create(newProduct);
+    const products = await productsRepo.create(newProduct); // Cria um 'product' no MySQL.
 
-    redis.create(products);
+    redis.create(products); // Cria um 'product' no Redis.
 
     res.statusCode = 200;
     res.type("application/json");
@@ -111,6 +117,7 @@ routes.post("/create", async (rec: Request, res: Response) => {
   }
 });
 
+// Rota que atualiza um 'product' existente no MySQL e no Redis.
 routes.post("/update", async (rec: Request, res: Response) => {
   try {
     const updatedProduct = rec.body as Product;
@@ -128,7 +135,7 @@ routes.post("/update", async (rec: Request, res: Response) => {
       return;
     }
 
-    const products = await productsRepo.update(updatedProduct);
+    const products = await productsRepo.update(updatedProduct); // Atualiza o 'product' no MySQL.
 
     if (!products) {
       res.statusCode = 404;
@@ -137,7 +144,7 @@ routes.post("/update", async (rec: Request, res: Response) => {
       return;
     }
 
-    await redis.update(products);
+    await redis.update(products); // Atualiza o 'product' no Redis.
 
     res.statusCode = 200;
     res.type("application/json");
@@ -152,6 +159,7 @@ routes.post("/update", async (rec: Request, res: Response) => {
   }
 });
 
+// Rota que deleta um 'product' existente no MySQL e no Redis.
 routes.delete("/delete/:id", async (rec: Request, res: Response) => {
   try {
     const idParam = rec.params.id as unknown as number;
@@ -164,7 +172,7 @@ routes.delete("/delete/:id", async (rec: Request, res: Response) => {
       return;
     }
 
-    const idResponse = await productsRepo.delete(id);
+    const idResponse = await productsRepo.delete(id); // Deleta o 'product' no MySQL.
     if (idResponse === 0) {
       res.statusCode = 404;
       res.type("application/json");
@@ -172,7 +180,7 @@ routes.delete("/delete/:id", async (rec: Request, res: Response) => {
       return;
     }
 
-    redis.delete(id);
+    redis.delete(id); // Deleta o 'product' no Redis.
 
     res.statusCode = 200;
     res.type("application/json");
@@ -187,9 +195,10 @@ routes.delete("/delete/:id", async (rec: Request, res: Response) => {
   }
 });
 
-// aplicar as rotas na aplicação web backend.
+// Aplica as rotas na aplicação web backend.
 app.use(routes);
 
+// Inicia o servidor na porta definida e sincroniza dados do MySQL com o Redis.
 app.listen(port, async () => {
   console.log("Server is running on 3000");
   await redis.synchronize();
